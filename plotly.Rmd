@@ -156,7 +156,7 @@ plot_3 <- plot_ly(
   colors = "Paired",           # Choose a color palette
   text = ~paste(year, "\n", round(avg_prcp, 2)),  # Show year and avg precipitation
   textposition = 'auto',       # Automatically position text inside or above bars
-  textfont = list(size = 12),   # Set font size for better readability
+  textfont = list(size = 12),  # Set font size for better readability
   hoverinfo = 'text',
   hovertext = ~paste("Year:", year, "<br>Average Precipitation (mm):", round(avg_prcp, 2))
 ) %>%
@@ -164,11 +164,11 @@ plot_3 <- plot_ly(
     title = "Average Annual Precipitation by Decade",
     xaxis = list(title = "Year", tickfont = list(size = 12)),
     yaxis = list(title = "Average Precipitation (mm)", tickfont = list(size = 12)),
-    margin = list(t = 50),
-    legend = list(title = list(text = "Decade")),  # Add legend title for decade
-     margin = list(b = 100) 
+    margin = list(t = 60, b = 80),  # Set top and bottom margins together
+    legend = list(title = list(text = "Decade"))  # Add legend title for decade
   )
 
 # Display the plot
 plot_3
 ```
+
