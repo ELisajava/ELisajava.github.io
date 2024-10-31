@@ -93,10 +93,82 @@ plot_1 <- plot_ly(
       title = "Snowfall (cm)",
       titlefont = list(size = 14)
     ),
-    margin = list(t = 100, b = 80)  # Adjust top and bottom margins
+    margin = list(t = 60, b = 80)  # Adjust top and bottom margins
   )
 
 # Display the plot
 plot_1
 ```
 
+# Create the box plot
+```{r}
+# Create the box plot for temperature distribution by year
+plot_2 <- plot_ly(
+  data = ny_noaa_sample,
+  x = ~as.factor(year),
+  y = ~tmax,
+  type = 'box',
+  name = 'Max Temp',
+  marker = list(opacity = 0.6),
+  hoverinfo = 'text',
+  text = ~paste("Year:", year, "<br>Max Temp (°C):", tmax)
+) %>%
+  add_trace(
+    y = ~tmin,
+    name = 'Min Temp',
+    type = 'box',
+    hoverinfo = 'text',
+    text = ~paste("Year:", year, "<br>Min Temp (°C):", tmin)
+  ) %>%
+  layout(
+    title = "Temperature Distribution by Year",
+    xaxis = list(
+      title = "Year",
+      titlefont = list(size = 14)
+    ),
+    yaxis = list(
+      title = "Temperature (°C)",
+      titlefont = list(size = 14)
+    ),
+    margin = list(t = 60, b = 80)  # Adjust top and bottom margins
+  )
+
+# Display the plot
+plot_2
+```
+
+# Create the bar plot
+```{r}
+# Calculate average annual precipitation and add a decade column
+annual_precip <- ny_noaa_sample %>%
+  group_by(year) %>%
+  summarize(avg_prcp = mean(prcp, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(decade = floor(year / 10) * 10)  # Group years by decade
+
+# Create a bar plot for average annual precipitation with different colors by decade
+plot_3 <- plot_ly(
+  data = annual_precip,
+  x = ~year,
+  y = ~avg_prcp,
+  type = 'bar',
+  color = ~as.factor(decade),  # Use decade as color grouping
+  colors = "Paired",           # Choose a color palette
+  text = ~paste(year, "\n", round(avg_prcp, 2)),  # Show year and avg precipitation
+  textposition = 'auto',       # Automatically position text inside or above bars
+  textfont = list(size = 12),   # Set font size for better readability
+  hoverinfo = 'text',
+  hovertext = ~paste("Year:", year, "<br>Average Precipitation (mm):", round(avg_prcp, 2))
+) %>%
+  layout(
+    title = "Average Annual Precipitation by Decade",
+    xaxis = list(title = "Year", tickfont = list(size = 12)),
+    yaxis = list(title = "Average Precipitation (mm)", tickfont = list(size = 12)),
+    margin = list(t = 50),
+    legend = list(title = list(text = "Decade")),  # Add legend title for decade
+     margin = list(b = 100) 
+  )
+
+# Display the plot
+plot_3
+```
