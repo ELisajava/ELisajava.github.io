@@ -1,0 +1,170 @@
+---
+title: "Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    source: embed
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(p8105.datasets)
+library(plotly)
+```
+
+```{r}
+# Import, clean, and tidy dataset 
+## Load the dataset and view structure
+data("ny_noaa")
+
+## Create separate variables for year, month, and day
+ny_noaa = ny_noaa %>%
+  mutate(
+    year = year(date),
+    month = month(date),
+    day = day(date)
+  )
+
+## Convert `prcp`, `tmax`, and `tmin` to numeric format before unit conversion
+ny_noaa = ny_noaa %>%
+  mutate(
+    prcp = as.numeric(prcp),
+    tmax = as.numeric(tmax),
+    tmin = as.numeric(tmin)
+  )
+
+## Adjust units for temperature and precipitation
+ny_noaa = ny_noaa %>%
+  mutate(
+    prcp = prcp/10,  # Precipitation converts from tenths of mm to mm.
+    tmax = tmax/10,  # Max temp converts from tenths of degrees Celsius to degrees Celsius.
+    tmin = tmin/10   # Min temp converts from tenths of degrees Celsius to degrees Celsius.
+  )
+
+## Ensure logical consistency in temperature data (tmax data is higher than tmin data)
+ny_noaa = ny_noaa %>%
+  filter(tmax > tmin | is.na(tmax) | is.na(tmin))  
+
+## Handle missing values
+ny_noaa <- ny_noaa %>%
+  drop_na() # Remove rows with any missing values
+
+## Remove duplicate rows in nyc_r_data_cleaned
+ny_noaa <- ny_noaa %>%
+  distinct()
+
+## Randomly select 10000 observations from ny_noaa
+ny_noaa_sample <- ny_noaa %>% sample_n(10000)
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Temperature Distribution by Year
+
+```{r}
+# Create the box plot for temperature distribution by year
+plot_2 <- plot_ly(
+  data = ny_noaa_sample,
+  x = ~as.factor(year),
+  y = ~tmax,
+  type = 'box',
+  name = 'Max Temp',
+  marker = list(opacity = 0.6),
+  hoverinfo = 'text',
+  text = ~paste("Year:", year, "<br>Max Temp (°C):", tmax)
+) %>%
+  add_trace(
+    y = ~tmin,
+    name = 'Min Temp',
+    type = 'box',
+    hoverinfo = 'text',
+    text = ~paste("Year:", year, "<br>Min Temp (°C):", tmin)
+  ) %>%
+  layout(
+    xaxis = list(
+      title = "Year",
+      titlefont = list(size = 14)
+    ),
+    yaxis = list(
+      title = "Temperature (°C)",
+      titlefont = list(size = 14)
+    ),
+    margin = list(t = 60, b = 80)  # Adjust top and bottom margins
+  )
+
+# Display the plot
+plot_2
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Precipitation vs. Snowfall
+
+```{r}
+# Create the scatter plot with adjusted x-axis label position
+plot_1 <- plot_ly(
+  data = ny_noaa_sample,
+  x = ~prcp,
+  y = ~snow,
+  type = 'scatter',
+  mode = 'markers',
+  marker = list(size = 5, opacity = 0.6),
+  hoverinfo = 'text',
+  text = ~paste("ID:", id, "<br>Date:", date, "<br>Precipitation (mm):", prcp, "<br>Snow (cm):", snow)
+) %>%
+  layout(
+    xaxis = list(
+      title = "Precipitation (mm)",
+      titlefont = list(size = 14),
+      standoff = 20  # Increase standoff to move x-axis label up
+    ),
+    yaxis = list(
+      title = "Snowfall (cm)",
+      titlefont = list(size = 14)
+    ),
+    margin = list(t = 60, b = 80)  # Adjust top and bottom margins
+  )
+
+# Display the plot
+plot_1
+```
+
+### Average Annual Precipitation by Decade
+
+```{r}
+# Calculate average annual precipitation and add a decade column
+annual_precip <- ny_noaa_sample %>%
+  group_by(year) %>%
+  summarize(avg_prcp = mean(prcp, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(decade = floor(year / 10) * 10)  # Group years by decade
+
+# Create a bar plot for average annual precipitation with different colors by decade
+plot_3 <- plot_ly(
+  data = annual_precip,
+  x = ~year,
+  y = ~avg_prcp,
+  type = 'bar',
+  color = ~as.factor(decade),  # Use decade as color grouping
+  colors = "Paired",           # Choose a color palette
+  text = ~paste(year, "\n", round(avg_prcp, 2)),  # Show year and avg precipitation
+  textposition = 'auto',       # Automatically position text inside or above bars
+  textfont = list(size = 12),  # Set font size for better readability
+  hoverinfo = 'text',
+  hovertext = ~paste("Year:", year, "<br>Average Precipitation (mm):", round(avg_prcp, 2))
+) %>%
+  layout(
+    xaxis = list(title = "Year", tickfont = list(size = 12)),
+    yaxis = list(title = "Average Precipitation (mm)", tickfont = list(size = 12)),
+    margin = list(t = 60, b = 80),  # Set top and bottom margins together
+    legend = list(title = list(text = "Decade"))  # Add legend title for decade
+  )
+
+# Display the plot
+plot_3
+```
+
