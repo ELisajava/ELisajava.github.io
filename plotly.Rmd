@@ -1,0 +1,102 @@
+---
+title: "Plotly examples"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+We're going to look at ny_noaa data.
+
+# Load Necessary Libraries
+```{r}
+library(tidyverse)
+library(p8105.datasets)
+library(plotly)
+```
+
+# Import, clean, and tidy dataset 
+```{r}
+# Load the dataset and view structure
+data("ny_noaa")
+glimpse(ny_noaa)
+```
+
+```{r}
+# Create separate variables for year, month, and day
+ny_noaa = ny_noaa %>%
+  mutate(
+    year = year(date),
+    month = month(date),
+    day = day(date)
+  )
+
+# Convert `prcp`, `tmax`, and `tmin` to numeric format before unit conversion
+ny_noaa = ny_noaa %>%
+  mutate(
+    prcp = as.numeric(prcp),
+    tmax = as.numeric(tmax),
+    tmin = as.numeric(tmin)
+  )
+
+# Adjust units for temperature and precipitation
+ny_noaa = ny_noaa %>%
+  mutate(
+    prcp = prcp/10,  # Precipitation converts from tenths of mm to mm.
+    tmax = tmax/10,  # Max temp converts from tenths of degrees Celsius to degrees Celsius.
+    tmin = tmin/10   # Min temp converts from tenths of degrees Celsius to degrees Celsius.
+  )
+
+# Ensure logical consistency in temperature data (tmax data is higher than tmin data)
+ny_noaa = ny_noaa %>%
+  filter(tmax > tmin | is.na(tmax) | is.na(tmin))  
+
+# Check for missing values 
+colSums(is.na(ny_noaa))
+
+# Handle missing values
+ny_noaa <- ny_noaa %>%
+  drop_na() # Remove rows with any missing values
+
+# Remove duplicate rows in nyc_r_data_cleaned
+ny_noaa <- ny_noaa %>%
+  distinct()
+
+# Randomly select 10000 observations from ny_noaa
+ny_noaa_sample <- ny_noaa %>% sample_n(10000)
+
+# Display the cleaned dataset
+glimpse(ny_noaa_sample)
+```
+
+# Create the scatter plot
+```{r}
+# Create the scatter plot with adjusted x-axis label position
+plot_1 <- plot_ly(
+  data = ny_noaa_sample,
+  x = ~prcp,
+  y = ~snow,
+  type = 'scatter',
+  mode = 'markers',
+  marker = list(size = 5, opacity = 0.6),
+  hoverinfo = 'text',
+  text = ~paste("ID:", id, "<br>Date:", date, "<br>Precipitation (mm):", prcp, "<br>Snow (cm):", snow)
+) %>%
+  layout(
+    title = "Precipitation vs. Snowfall",
+    xaxis = list(
+      title = "Precipitation (mm)",
+      titlefont = list(size = 14),
+      standoff = 20  # Increase standoff to move x-axis label up
+    ),
+    yaxis = list(
+      title = "Snowfall (cm)",
+      titlefont = list(size = 14)
+    ),
+    margin = list(t = 100, b = 80)  # Adjust top and bottom margins
+  )
+
+# Display the plot
+plot_1
+```
+
